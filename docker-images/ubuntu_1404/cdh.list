@@ -1,0 +1,5 @@
+#CM & CDH repos
+deb [arch=amd64] http://cts-gateway.sh.intel.com/repos/5.14-RC1/cdh/ubuntu_trusty/amd64/cdh/  trusty-cdh5.14.0 contrib
+deb-src   http://cts-gateway.sh.intel.com/repos/5.14-RC1/cdh/ubuntu_trusty/amd64/cdh/  trusty-cdh5.14.0 contrib
+deb [arch=amd64]   http://cts-gateway.sh.intel.com/repos/5.14-RC1/cm/ubuntu_trusty/amd64/cm/ trusty-cm5.14.0 contrib
+deb-src   http://cts-gateway.sh.intel.com/repos/5.14-RC1/cm/ubuntu_trusty/amd64/cm/  trusty-cm5.14.0 contrib

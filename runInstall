@@ -1,0 +1,149 @@
+#!/bin/bash
+OS=ubuntu
+OSVERSION=1604
+CDHVERSION=cdh514
+#REPOSITORY=10.239.47.144:5000/${OS}
+REPOSITORY=${OS}
+TAG=${OSVERSION}_${CDHVERSION}
+######   default value   ########################
+#container num
+CONNUM=3
+PORT=37180
+MANUAL=1
+
+function print_usage() {
+    echo 'usage: runInstall [-o OS] [-v OSVERSION] [-c CDHVERSION] [-n CONTAINER_NUM] [-p PORT] [-m 0|1]'
+}
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+      -o) export OS="$2"; shift;;
+      -v) export OSVERSION="$2"; shift;;
+      -c) export CDHVERSION="$2"; shift;;
+      -n) export CONNUM="$2"; shift;;
+      -p) export PORT="$2"; shift;;
+      -m) export MANUAL="$2"; shift;;
+      -h)
+          print_usage
+          exit 0;;
+      *)
+          print_usage
+          exit 0;;
+    esac
+    shift
+done
+
+TAG=${OSVERSION}_${CDHVERSION}
+echo "runInstall -o $OS -v $OSVERSION -c $CDHVERSION -n $CONNUM -p $PORT -m $MANUAL"
+
+function start(){
+#build images
+pushd ./docker-images/${OS}_${OSVERSION}
+docker build --rm --no-cache=true -t ${REPOSITORY}:${TAG} .
+popd
+#create master container
+docker network create --driver bridge ${OS}${OSVERSION}-network
+sleep 5
+echo "creating master container..."
+docker run --privileged=true --network=${OS}${OSVERSION}-network -v /mnt/disk1 -itd -p $PORT:7180 --name=${OS}${OSVERSION}-master -h ${OS}${OSVERSION}-master ${REPOSITORY}:${TAG} bash  > /dev/null 2>&1
+
+docker exec -it ${OS}${OSVERSION}-master cp -r /etc/hosts /etc/hosts_bak
+docker exec -it ${OS}${OSVERSION}-master cp -r /etc/hostname /etc/hostname_bak
+docker exec -it ${OS}${OSVERSION}-master cp -r /etc/resolv.conf /etc/resolv.conf_bak
+docker exec -it ${OS}${OSVERSION}-master umount /etc/hosts
+docker exec -it ${OS}${OSVERSION}-master umount /etc/hostname
+docker exec -it ${OS}${OSVERSION}-master umount /etc/resolv.conf
+docker exec -it ${OS}${OSVERSION}-master mv /etc/hosts_bak /etc/hosts
+docker exec -it ${OS}${OSVERSION}-master mv /etc/hostname_bak /etc/hostname
+docker exec -it ${OS}${OSVERSION}-master mv /etc/resolv.conf_bak /etc/resolv.conf
+edit_hosts ${OS}${OSVERSION}-master ${OS}${OSVERSION}-network
+
+#create slave container
+for ((i=1;i<=${CONNUM};i++))
+do
+echo "creating slave container: ${OS}${OSVERSION}-slave${i}..."
+docker run --privileged=true --network=${OS}${OSVERSION}-network -v /mnt/disk1 -itd --name=${OS}${OSVERSION}-slave${i} -h ${OS}${OSVERSION}-slave${i} ${REPOSITORY}:${TAG} bash  > /dev/null 2>&1
+
+docker exec -it ${OS}${OSVERSION}-slave${i} cp -r /etc/hosts /etc/hosts_bak
+docker exec -it ${OS}${OSVERSION}-slave${i} cp -r /etc/hostname /etc/hostname_bak
+docker exec -it ${OS}${OSVERSION}-slave${i} cp -r /etc/resolv.conf /etc/resolv.conf_bak
+docker exec -it ${OS}${OSVERSION}-slave${i} umount /etc/hosts
+docker exec -it ${OS}${OSVERSION}-slave${i} umount /etc/hostname
+docker exec -it ${OS}${OSVERSION}-slave${i} umount /etc/resolv.conf
+docker exec -it ${OS}${OSVERSION}-slave${i} mv /etc/hosts_bak /etc/hosts
+docker exec -it ${OS}${OSVERSION}-slave${i} mv /etc/hostname_bak /etc/hostname
+docker exec -it ${OS}${OSVERSION}-slave${i} mv /etc/resolv.conf_bak /etc/resolv.conf
+edit_hosts ${OS}${OSVERSION}-slave${i} ${OS}${OSVERSION}-network
+done
+
+echo "master and ${CONNUM} slave containers created!"
+
+if [ ${MANUAL} == "0" ]; then
+docker exec -it ${OS}${OSVERSION}-master bash
+elif [ ${MANUAL} == "1" ]; then
+echo "you have chosen to install CM automatically."
+echo "installing CM ..."
+docker exec -it ${OS}${OSVERSION}-master apt-get install -y oracle-j2sdk1.7 cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db-2
+docker exec -it ${OS}${OSVERSION}-master service cloudera-scm-server-db restart
+docker exec -it ${OS}${OSVERSION}-master service cloudera-scm-server restart
+sleep 30
+echo "CM installation finished, please login with port: $PORT on the host"
+else
+echo "-m must be 0 or 1, exiting..."
+exit 0
+fi
+}
+
+function clean(){
+for ((i=1;i<=${CONNUM};i++))
+do
+docker rm -f ${OS}${OSVERSION}-slave${i} > /dev/null 2>&1
+done
+echo "all the slave containers removed!"
+
+docker rm -f ${OS}${OSVERSION}-master > /dev/null 2>&1
+echo "master containers removed!"
+
+docker rmi ${REPOSITORY}:${TAG} > /dev/null 2>&1
+echo "${TAG} image removed!"
+
+docker network rm ${OS}${OSVERSION}-network > /dev/null 2>&1
+echo "docker network ${OS}${OSVERSION}-network removed!"
+
+echo "all has been cleaned!"
+}
+
+function edit_hosts(){
+HOSTNAME=$1
+DOMAIN=$2
+IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $HOSTNAME)
+docker exec -it $HOSTNAME sed -i "s/^$IP/$IP $HOSTNAME.$DOMAIN/g" /etc/hosts
+}
+
+clean
+start
+
+
+
+#materID=$(docker run -itd \
+#    -p 7180:7180 \
+#    -h ${OS}${OSVERSION}-master \
+#    ${REPOSITORY}:${TAG} bash)
+#masterID=$(${materID}:0:10)
+##create slave container
+#for ((i=1;i<=${CONNUM}))
+#do
+##docker run -itd -h ${OS}${i} ${REPOSITORY}:${TAG} bash
+#echo "creating slave container: ${OS}${OSVERSION}-slave${i}..."
+#containerID[$i]=$(`docker run -itd -h ${OS}${OSVERSION}-slave${i} ${REPOSITORY}:${TAG} bash`)
+#containerID[$i]=${containerID[$i]:0:10}
+#
+#done 
+#
+#
+#function getIP(){
+#/sbin/ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:"
+#}
+
+
