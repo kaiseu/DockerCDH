@@ -1,5 +1,10 @@
 # DockerCDH
+## Test the installation
+```
+hadoop jar /usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar  pi 100 100
 
+spark-submit --class org.apache.spark.examples.SparkPi --master yarn-client --num-executors 4 --executor-memory 1g --executor-cores 1 /usr/lib/spark/lib/spark-examples.jar 10
+```
 
 
 #### Note
