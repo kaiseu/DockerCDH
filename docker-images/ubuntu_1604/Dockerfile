@@ -30,7 +30,8 @@ RUN echo "deb http://linux-ftp.sh.intel.com/pub/mirrors/ubuntu/ xenial main rest
     echo "deb-src http://linux-ftp.sh.intel.com/pub/mirrors/ubuntu/ xenial-backports main restricted universe multiverse" >> /etc/apt/sources.list
 
 RUN apt-get update && \
-    apt install -y sudo ntp psmisc expect && \
+    apt install -y sudo ntp psmisc expect libmysql-java && \
+    ln -s /usr/share/java/mysql-connector-java.jar  /usr/lib/mysql-connector-java.jar && \
     sed -i "s/^server/#server/g" /etc/ntp.conf && \
     echo "server bdpa-gateway.sh.intel.com iburst" >> /etc/ntp.conf
     #service ntp restart
