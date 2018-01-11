@@ -1,4 +1,5 @@
 # DockerCDH
+For easy installing CDH in Docker Containers with different OS.
 ## Test the installation
 ```
 hadoop jar /usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar  pi 100 100
