@@ -16,3 +16,15 @@ Solved:
 sudo apt-get install libmysql-java
 ln -s /usr/lib/jvm/java-7-oracle-cloudera/lib/mysql-connector-java.jar /usr/share/java/mysql-connector-java.jar
 ```
+
+2. CM service failed to start on Debian8.4
+```
+root@debian8:/opt# /etc/init.d/cloudera-scm-server-db start
+initdb: invalid locale name "en_US.UTF8"
+[FAIL] The ... failed!
+```
+
+Solved:
+```
+localedef -v -c -i en_US -f UTF-8 en_US.UTF-8
+```
