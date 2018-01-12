@@ -27,4 +27,7 @@ initdb: invalid locale name "en_US.UTF8"
 Solved:
 ```
 localedef -v -c -i en_US -f UTF-8 en_US.UTF-8
+or
+apt install -y locales-all
 ```
+
