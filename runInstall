@@ -1,14 +1,14 @@
 #!/bin/bash
-OS=ubuntu
-OSVERSION=1604
+OS=debian
+OSVERSION=82
 CDHVERSION=cdh514
 #REPOSITORY=10.239.47.144:5000/${OS}
-REPOSITORY=${OS}
+REPOSITORY=registry.docker-cn.com/library/debian/${OS}
 TAG=${OSVERSION}_${CDHVERSION}
 ######   default value   ########################
 #container num
 CONNUM=3
-PORT=37180
+PORT=57180
 MANUAL=1
 
 function print_usage() {
