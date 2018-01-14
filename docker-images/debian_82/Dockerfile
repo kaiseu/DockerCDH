@@ -1,6 +1,6 @@
 #debian8.4 for cdh
 #FROM 10.239.47.144:5000/ubuntu:14.04
-FROM debian:84
+FROM debian:82
 
 MAINTAINER kai.a.xu kai.a.xu@intel.com
 
@@ -40,8 +40,8 @@ RUN echo "#CM & CDH repos"   > /etc/apt/sources.list.d/cdh.list && \
 Run  wget -q   http://10.239.47.62/repos/5.14-RC1/cm/debian_jessie/amd64/cm/archive.key  -O- | sudo apt-key add - && \
     apt-get update
 
-RUN apt-get install -y locales-all 
- 
+RUN apt install -y locales-all
+    
 ENTRYPOINT ["/opt/boot.sh"]    
 
 

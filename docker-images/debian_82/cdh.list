@@ -1,0 +1,4 @@
+#CM & CDH repos
+deb [trusted=yes]  http://cts-gateway.sh.intel.com/repos/5.14-RC1/cm/debian_jessie/amd64/cm/  jessie-cm5.14.0 contrib   >> /etc/apt/sources.list.d/cdh.list
+deb [trusted=yes]  http://cts-gateway.sh.intel.com/repos/5.14-RC1/cdh/debian_jessie/amd64/cdh/ jessie-cdh5.14.0 contrib"   >> /etc/apt/sources.list.d/cdh.list
+

@@ -1,6 +1,7 @@
 #!/bin/bash
 service ntp start
 service ssh start
+localedef -v -c -i en_US -f UTF-8 en_US.UTF-8
 PASSWD=123456
 expect << EOF
   spawn passwd

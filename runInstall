@@ -1,14 +1,14 @@
 #!/bin/bash
 OS=debian
-OSVERSION=82
+OSVERSION=84
 CDHVERSION=cdh514
 #REPOSITORY=10.239.47.144:5000/${OS}
-REPOSITORY=registry.docker-cn.com/library/debian/${OS}
+REPOSITORY=${OS}
 TAG=${OSVERSION}_${CDHVERSION}
 ######   default value   ########################
 #container num
 CONNUM=3
-PORT=57180
+PORT=17180
 MANUAL=1
 
 function print_usage() {
@@ -46,6 +46,7 @@ popd
 docker network create --driver bridge ${OS}${OSVERSION}-network
 sleep 5
 echo "creating master container..."
+echo "docker run --privileged=true --network=${OS}${OSVERSION}-network -v /mnt/disk1 -itd -p $PORT:7180 --name=${OS}${OSVERSION}-master -h ${OS}${OSVERSION}-master ${REPOSITORY}:${TAG} bash  > /dev/null 2>&1"
 docker run --privileged=true --network=${OS}${OSVERSION}-network -v /mnt/disk1 -itd -p $PORT:7180 --name=${OS}${OSVERSION}-master -h ${OS}${OSVERSION}-master ${REPOSITORY}:${TAG} bash  > /dev/null 2>&1
 
 docker exec -it ${OS}${OSVERSION}-master cp -r /etc/hosts /etc/hosts_bak
@@ -85,8 +86,8 @@ elif [ ${MANUAL} == "1" ]; then
 echo "you have chosen to install CM automatically."
 echo "installing CM ..."
 docker exec -it ${OS}${OSVERSION}-master apt-get install -y oracle-j2sdk1.7 cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db-2
-docker exec -it ${OS}${OSVERSION}-master service cloudera-scm-server-db restart
-docker exec -it ${OS}${OSVERSION}-master service cloudera-scm-server restart
+docker exec -it ${OS}${OSVERSION}-master service cloudera-scm-server-db start
+docker exec -it ${OS}${OSVERSION}-master service cloudera-scm-server start
 sleep 30
 echo "CM installation finished, please login with port: $PORT on the host"
 else
@@ -118,7 +119,8 @@ function edit_hosts(){
 HOSTNAME=$1
 DOMAIN=$2
 IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $HOSTNAME)
-docker exec -it $HOSTNAME sed -i "s/^$IP/$IP $HOSTNAME.$DOMAIN/g" /etc/hosts
+#docker exec -it $HOSTNAME sed -i "s/^$IP/$IP $HOSTNAME.$DOMAIN/g" /etc/hosts
+docker exec -it $HOSTNAME sed -i "s/^$IP/$IP $HOSTNAME/g" /etc/hosts
 }
 
 clean
